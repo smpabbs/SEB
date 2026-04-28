@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Ujian ABBS - Versi Full Edit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+    <div id="login-screen" class="flex h-screen items-center justify-center">
+        <div class="w-96 rounded-xl bg-white p-8 shadow-lg border-t-4 border-blue-600">
+            <h2 class="mb-2 text-2xl font-bold text-center text-gray-800">Portal Ujian ABBS</h2>
+            <p class="text-sm text-center text-gray-500 mb-6">Silakan login ke akun Anda</p>
+            <input type="text" id="username" placeholder="Username" class="mb-4 w-full border p-3 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="password" placeholder="Password" class="mb-6 w-full border p-3 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button onclick="login()" id="btnLogin" class="w-full bg-blue-600 py-3 text-white font-bold rounded-lg hover:bg-blue-700 transition">Masuk</button>
+        </div>
+    </div>
+
+    <div id="super-dashboard" class="hidden p-8 max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-8 bg-blue-900 text-white p-6 rounded-xl shadow-md">
+            <div>
+                <h1 class="text-2xl font-bold">Dashboard Super Admin</h1>
+                <p class="text-blue-200">Hak akses penuh sistem ABBS</p>
+            </div>
+            <button onclick="logout()" class="bg-red-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-red-600 transition">Logout</button>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <h2 class="text-xl font-bold mb-4">Buat Akun Sekolah Baru</h2>
+                <div class="space-y-4">
+                    <input type="text" id="addSchoolName" placeholder="Nama Sekolah (Cth: SMA 1)" class="w-full p-3 border rounded bg-gray-50">
+                    <input type="text" id="addSchoolUser" placeholder="Username Klien" class="w-full p-3 border rounded bg-gray-50">
+                    <input type="text" id="addSchoolPass" placeholder="Password Klien" class="w-full p-3 border rounded bg-gray-50">
+                    <button onclick="createSchool()" id="btnCreateSchool" class="w-full bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700 transition">Buat Akun Sekolah</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-500">
+                <h2 class="text-xl font-bold mb-2">Edit / Override Token Ujian</h2>
+                <p class="text-xs text-gray-500 mb-4">Gunakan tombol Edit pada tabel untuk mengisi form ini.</p>
+                <div class="space-y-4">
+                    <div class="flex gap-2">
+                        <input type="text" id="superTokenName" placeholder="Nama Token" class="w-1/2 p-3 border rounded bg-gray-200 font-mono" disabled>
+                        <input type="text" id="superTokenOwner" placeholder="Pemilik" class="w-1/2 p-3 border rounded bg-gray-200" disabled>
+                    </div>
+                    <input type="text" id="superTokenUrl" placeholder="URL Target Baru" class="w-full p-3 border rounded bg-gray-50">
+                    <div class="flex gap-2">
+                        <button onclick="saveTokenSuper()" id="btnSaveSuper" class="flex-1 bg-orange-600 text-white py-3 rounded font-bold hover:bg-orange-700 transition">Update Data</button>
+                        <button onclick="cancelEditSuper()" id="btnCancelSuper" class="bg-gray-500 text-white px-4 py-3 rounded font-bold hidden">Batal</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="text-xl font-bold mb-4 border-b pb-2">Daftar Akun Sekolah</h2>
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead><tr class="bg-gray-100"><th class="p-3">Sekolah</th><th class="p-3">Username</th></tr></thead>
+                    <tbody id="list-schools"></tbody>
+                </table>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="text-xl font-bold mb-4 border-b pb-2">Semua Token (Bisa Edit)</h2>
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="p-3">Pemilik</th>
+                            <th class="p-3">Token</th>
+                            <th class="p-3">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="list-all-tokens"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="school-dashboard" class="hidden p-8 max-w-5xl mx-auto">
+        <div class="flex justify-between items-center mb-8 bg-green-700 text-white p-6 rounded-xl shadow-md">
+            <div>
+                <h1 class="text-2xl font-bold" id="client-school-name">Selamat Datang, -</h1>
+                <p class="text-green-200">Manajemen Link & Token Ujian</p>
+            </div>
+            <button onclick="logout()" class="bg-red-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-red-600 transition">Logout</button>
+        </div>
+        
+        <div class="mb-8 bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+            <h2 class="text-xl font-bold mb-2">Buat / Edit Token Ujian</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="tokenName" placeholder="Nama Token" class="p-3 border rounded font-mono uppercase bg-gray-50">
+                <input type="text" id="tokenUrl" placeholder="URL Target" class="p-3 border rounded bg-gray-50">
+            </div>
+            <button onclick="saveToken()" id="btnSaveToken" class="mt-4 bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700 transition">Simpan Token</button>
+            <button onclick="cancelEdit()" id="btnCancelEdit" class="mt-4 ml-2 bg-gray-500 text-white px-6 py-2 rounded font-bold hidden">Batal</button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-4 border-b pb-2">Daftar Token Ujian Anda</h2>
+            <table class="w-full text-left border-collapse">
+                <thead><tr class="bg-gray-100"><th class="p-3">Token</th><th class="p-3">URL Target</th><th class="p-3 text-center">Aksi</th></tr></thead>
+                <tbody id="list-my-tokens"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where, setDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1GTZ1dEmv4jI7XcAErhjpDOv6S4XE7jk",
+            authDomain: "exam-847db.firebaseapp.com",
+            projectId: "exam-847db",
+            storageBucket: "exam-847db.firebasestorage.app",
+            messagingSenderId: "1075957101160",
+            appId: "1:1075957101160:web:db222bb5e018244dbf41dd",
+            measurementId: "G-SMZQQPELQL"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // --- LOGIN ---
+        window.login = async function() {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+            if(!user || !pass) return alert('Isi data login!');
+
+            if (user === 'admin' && pass === '123Empat#') {
+                currentUser = { role: 'superadmin', username: 'admin' };
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('super-dashboard').classList.remove('hidden');
+                loadSuperAdminData();
+                return;
+            }
+
+            const q = query(collection(db, "users"), where("username", "==", user));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                const userData = snap.docs[0].data();
+                if (userData.password === pass) {
+                    currentUser = userData;
+                    document.getElementById('client-school-name').innerText = "Sekolah: " + userData.nama_sekolah;
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('school-dashboard').classList.remove('hidden');
+                    loadSchoolTokens();
+                } else alert('Password salah!');
+            } else alert('Akun tidak ada!');
+        };
+
+        window.logout = function() { location.reload(); };
+
+        // ================= LOGIKA SUPER ADMIN =================
+        window.prepareEditSuper = function(token, url, owner) {
+            document.getElementById('superTokenName').value = token;
+            document.getElementById('superTokenOwner').value = owner;
+            document.getElementById('superTokenUrl').value = url;
+            document.getElementById('btnCancelSuper').classList.remove('hidden');
+            document.getElementById('superTokenUrl').focus();
+        };
+
+        window.cancelEditSuper = function() {
+            document.getElementById('superTokenName').value = '';
+            document.getElementById('superTokenOwner').value = '';
+            document.getElementById('superTokenUrl').value = '';
+            document.getElementById('btnCancelSuper').classList.add('hidden');
+        };
+
+        window.saveTokenSuper = async function() {
+            const token = document.getElementById('superTokenName').value;
+            const owner = document.getElementById('superTokenOwner').value;
+            const url = document.getElementById('superTokenUrl').value;
+            if(!token || !url) return alert('Pilih token dulu dari tabel!');
+
+            await setDoc(doc(db, "tokens", token), {
+                token_ujian: token,
+                url_target: url,
+                pemilik: owner, // Tetap gunakan pemilik aslinya
+                diupdate_oleh: "super-admin",
+                diupdate_pada: serverTimestamp()
+            }, { merge: true });
+
+            alert('Token ' + token + ' berhasil diperbarui!');
+            cancelEditSuper();
+            loadSuperAdminData();
+        };
+
+        async function loadSuperAdminData() {
+            // Load Sekolah
+            const uSnap = await getDocs(collection(db, "users"));
+            let uHtml = '';
+            uSnap.forEach(d => { uHtml += `<tr class="border-b"><td class="p-3">${d.data().nama_sekolah}</td><td class="p-3 font-mono text-xs">${d.data().username}</td></tr>`; });
+            document.getElementById('list-schools').innerHTML = uHtml;
+
+            // Load Tokens
+            const tSnap = await getDocs(collection(db, "tokens"));
+            let tHtml = '';
+            tSnap.forEach(ds => {
+                const data = ds.data();
+                tHtml += `<tr class="border-b">
+                    <td class="p-3 text-xs font-bold">${data.pemilik}</td>
+                    <td class="p-3 font-mono text-blue-600 font-bold">${data.token_ujian}</td>
+                    <td class="p-3">
+                        <button onclick="prepareEditSuper('${data.token_ujian}', '${data.url_target}', '${data.pemilik}')" class="text-blue-500 mr-2 text-xs font-bold">EDIT</button>
+                        <button onclick="deleteToken('${data.token_ujian}')" class="text-red-500 text-xs font-bold">HAPUS</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('list-all-tokens').innerHTML = tHtml;
+        }
+
+        window.createSchool = async function() {
+            const name = document.getElementById('addSchoolName').value;
+            const user = document.getElementById('addSchoolUser').value;
+            const pass = document.getElementById('addSchoolPass').value;
+            if(!name || !user || !pass) return alert('Isi lengkap!');
+            await setDoc(doc(db, "users", user), { nama_sekolah: name, username: user, password: pass, role: "admin_sekolah" });
+            alert('Sekolah Berhasil Dibuat!');
+            loadSuperAdminData();
+        };
+
+        // ================= LOGIKA ADMIN SEKOLAH =================
+        window.prepareEdit = function(token, url) {
+            document.getElementById('tokenName').value = token;
+            document.getElementById('tokenName').disabled = true;
+            document.getElementById('tokenUrl').value = url;
+            document.getElementById('btnCancelEdit').classList.remove('hidden');
+        };
+
+        window.cancelEdit = function() {
+            document.getElementById('tokenName').value = '';
+            document.getElementById('tokenName').disabled = false;
+            document.getElementById('tokenUrl').value = '';
+            document.getElementById('btnCancelEdit').classList.add('hidden');
+        };
+
+        window.saveToken = async function() {
+            const token = document.getElementById('tokenName').value.toUpperCase().replace(/\s/g, '');
+            const url = document.getElementById('tokenUrl').value.trim();
+            if(!token || !url) return alert('Isi data!');
+
+            await setDoc(doc(db, "tokens", token), {
+                token_ujian: token,
+                url_target: url,
+                pemilik: currentUser.username,
+                diupdate_pada: serverTimestamp()
+            }, { merge: true });
+
+            alert('Tersimpan!');
+            cancelEdit();
+            loadSchoolTokens();
+        };
+
+        async function loadSchoolTokens() {
+            const q = query(collection(db, "tokens"), where("pemilik", "==", currentUser.username));
+            const snap = await getDocs(q);
+            let h = '';
+            snap.forEach(ds => {
+                const d = ds.data();
+                h += `<tr class="border-b">
+                    <td class="p-3 font-mono font-bold">${d.token_ujian}</td>
+                    <td class="p-3 text-xs truncate max-w-[150px]">${d.url_target}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="prepareEdit('${d.token_ujian}', '${d.url_target}')" class="text-blue-500 mr-2 font-bold">EDIT</button>
+                        <button onclick="deleteToken('${d.token_ujian}')" class="text-red-500 font-bold">HAPUS</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('list-my-tokens').innerHTML = h;
+        }
+
+        window.deleteToken = async function(id) {
+            if(confirm('Hapus token ' + id + '?')) {
+                await deleteDoc(doc(db, "tokens", id));
+                if(currentUser.role === 'superadmin') loadSuperAdminData(); else loadSchoolTokens();
+            }
+        };
+    </script>
+</body>
+</html>
