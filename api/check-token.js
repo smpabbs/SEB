@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 
-// Konfigurasi Firebase Anda yang sudah lengkap
+// Konfigurasi Firebase Anda
 const firebaseConfig = {
     apiKey: "AIzaSyA1GTZ1dEmv4jI7XcAErhjpDOv6S4XE7jk",
     authDomain: "exam-847db.firebaseapp.com",
@@ -12,43 +12,48 @@ const firebaseConfig = {
     measurementId: "G-SMZQQPELQL"
 };
 
-// Inisialisasi Firebase di Backend Vercel
+// Inisialisasi Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export default async function handler(req, res) {
-    // 1. TAMBAHKAN KODE CORS INI AGAR ELECTRON BISA MASUK
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Mengizinkan akses dari mana saja (termasuk aplikasi lokal)
+    // ====================================================================
+    // 1. PENGATURAN CORS (SANGAT PENTING UNTUK ELECTRON)
+    // Mengizinkan aplikasi lokal (Electron) untuk mengakses API ini
+    // ====================================================================
+    res.setHeader('Access-Control-Allow-Origin', '*'); 
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    // Menangani preflight request dari browser/Electron
+    // Menangani "Preflight Request" yang biasanya dikirim otomatis oleh fetch API
     if (req.method === 'OPTIONS') {
         res.status(200).end();
         return;
     }
-    // Membaca parameter token dari URL (contoh: /api/check-token?token=PAS-MTK)
+
+    // ====================================================================
+    // 2. LOGIKA PENGECEKAN TOKEN
+    // ====================================================================
     const { token } = req.query;
 
     if (!token) {
         return res.status(400).json({ 
             success: false, 
-            message: "Token tidak dikirim. Pastikan format URL benar." 
+            message: "Token tidak dikirim. Pastikan Anda mengetik token." 
         });
     }
 
-    // Trik Caching agar kuota Vercel Anda tetap gratis & server tidak jebol
-    // s-maxage=3600 artinya Vercel menyimpan jawaban ini selama 1 jam
-    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
+    // Cache Control (opsional, agar Vercel merespon lebih cepat dan hemat kuota)
+    res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate');
 
     try {
-        // Mencari dokumen di koleksi "tokens" dengan nama = token (diubah ke huruf besar semua agar aman)
+        // Mencari dokumen token di Firebase (pastikan huruf besar semua)
         const docRef = doc(db, "tokens", token.toUpperCase());
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
             const data = docSnap.data();
-            // Jika token ketemu, kembalikan data URL dan Pemiliknya
+            // Jika token ketemu, kirimkan URL targetnya
             return res.status(200).json({ 
                 success: true, 
                 url: data.url_target,
@@ -58,7 +63,7 @@ export default async function handler(req, res) {
             // Jika token tidak ada di database
             return res.status(404).json({ 
                 success: false, 
-                message: "Token Ujian Tidak Ditemukan atau Tidak Valid" 
+                message: "Token Ujian Tidak Ditemukan atau Tidak Valid!" 
             });
         }
     } catch (error) {
