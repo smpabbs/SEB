@@ -17,6 +17,16 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export default async function handler(req, res) {
+    // 1. TAMBAHKAN KODE CORS INI AGAR ELECTRON BISA MASUK
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Mengizinkan akses dari mana saja (termasuk aplikasi lokal)
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    // Menangani preflight request dari browser/Electron
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
     // Membaca parameter token dari URL (contoh: /api/check-token?token=PAS-MTK)
     const { token } = req.query;
 
